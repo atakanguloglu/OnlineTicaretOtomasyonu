@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,12 +19,12 @@ namespace OnlineTicaretOtomasyonu.Controllers
     public class RolesController : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<AppUser> _userManager;  // ApplicationUser → AppUser
         private readonly ITenantService _tenantService;
 
         public RolesController(
             RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager,
+            UserManager<AppUser> userManager,  // ApplicationUser → AppUser
             ITenantService tenantService)
         {
             _roleManager = roleManager;
@@ -40,7 +40,7 @@ namespace OnlineTicaretOtomasyonu.Controllers
         {
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
-            
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var user = await _userManager.FindByIdAsync(userId);
             var userRoles = await _userManager.GetRolesAsync(user);
@@ -62,34 +62,34 @@ namespace OnlineTicaretOtomasyonu.Controllers
             {
                 return Forbid();
             }
-            
+
             // Apply search filter if provided
             if (!string.IsNullOrEmpty(search))
             {
                 rolesQuery = rolesQuery.Where(r => r.Name.Contains(search) || r.NormalizedName.Contains(search.ToUpper()));
             }
-            
+
             // Get total count before pagination
             var totalCount = await rolesQuery.CountAsync();
-            
+
             // Apply pagination
             var roles = await rolesQuery
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-                
+
             var roleViewModels = roles.Select(r => new RoleViewModel
             {
                 Id = r.Id,
                 Name = r.Name,
                 NormalizedName = r.NormalizedName
             }).ToList();
-            
+
             // Create paged result
             var pagedResult = PagedResultViewModel<RoleViewModel>.Create(
-                roleViewModels, 
-                totalCount, 
-                pageNumber, 
+                roleViewModels,
+                totalCount,
+                pageNumber,
                 pageSize);
 
             return Ok(pagedResult);
@@ -183,7 +183,7 @@ namespace OnlineTicaretOtomasyonu.Controllers
             }
 
             // Prevent renaming system roles
-            if ((role.Name == "SuperAdmin" || role.Name == "TenantAdmin" || role.Name == "Customer") 
+            if ((role.Name == "SuperAdmin" || role.Name == "TenantAdmin" || role.Name == "Customer")
                 && role.Name != model.Name)
             {
                 return BadRequest(new { error = "Cannot rename system roles" });
@@ -254,7 +254,7 @@ namespace OnlineTicaretOtomasyonu.Controllers
         {
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
-            
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var user = await _userManager.FindByIdAsync(userId);
             var userRoles = await _userManager.GetRolesAsync(user);
@@ -267,7 +267,7 @@ namespace OnlineTicaretOtomasyonu.Controllers
 
             // Get all users in role first
             var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name);
-            IEnumerable<ApplicationUser> filteredUsers;
+            IEnumerable<AppUser> filteredUsers;  // ApplicationUser → AppUser
 
             // SuperAdmin can see all users in a role
             if (userRoles.Contains("SuperAdmin"))
@@ -284,23 +284,23 @@ namespace OnlineTicaretOtomasyonu.Controllers
             {
                 return Forbid();
             }
-            
+
             // Apply search filter if provided
             if (!string.IsNullOrEmpty(search))
             {
-                filteredUsers = filteredUsers.Where(u => 
-                    u.UserName.Contains(search) || 
+                filteredUsers = filteredUsers.Where(u =>
+                    u.UserName.Contains(search) ||
                     u.Email.Contains(search));
             }
-            
+
             // Get total count
             var totalCount = filteredUsers.Count();
-            
+
             // Apply pagination
             var pagedUsers = filteredUsers
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize);
-                
+
             var userViewModels = pagedUsers.Select(u => new
             {
                 u.Id,
@@ -308,7 +308,7 @@ namespace OnlineTicaretOtomasyonu.Controllers
                 u.Email,
                 u.TenantId
             });
-            
+
             // Create paged result
             var pagedResult = new
             {
@@ -324,4 +324,4 @@ namespace OnlineTicaretOtomasyonu.Controllers
             return Ok(pagedResult);
         }
     }
-} 
+}
