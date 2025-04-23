@@ -68,7 +68,7 @@ namespace OnlineTicaretOtomasyonu.ViewModels
         public int? TenantId { get; set; }
 
         [Required(ErrorMessage = "Rol seçimi zorunludur")]
-        public string Role { get; set; }
+        public string Role { get; set;}
     }
 
     public class LoginViewModel
